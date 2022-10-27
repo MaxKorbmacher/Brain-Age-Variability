@@ -10,6 +10,9 @@ A repository with information on the publication 'The influence of bio-psycho-so
 2.1) Brain age calculation code (using XGBoost in Python) <br/>
 2.2) Analysis code (using R) <br/>
 
+3) Figures  <br/>
+3.1) All in-text figures as .pdf files <br/>
+3.2) All supplementary figures as .pdf files <br/>
 # Additional Information
 - the preprint describing in more detail how brain age was calculated (different from the current paper) can be found here: https://doi.org/10.1101/2022.09.29.510029 <br/>
  <br/>
