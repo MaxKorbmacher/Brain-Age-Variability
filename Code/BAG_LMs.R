@@ -357,35 +357,35 @@ brainage_list = list(FULL, MEAN, BRIA, DKI, DTI, SMT, SMT_mc, WMTI)
 
 ## ## ## NULL MODEL 0.1 ## ## ## 
 model0.1 <- list()
-for (i in 1:8) {model0.1[[i]] = lmer(brainage_gap~ 1 + (1|site_t3), data=brainage_list[[i]])}
+for (i in 1:8) {model0.1[[i]] = lmer(brainage~ 1 + (1|site_t3), data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model0.1_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model0.1_metrics[i,] = c(r.squaredGLMM(model0.1[[i]]),AIC(model0.1[[i]]),(sigma(model0.1[[i]]))^2,summary(model0.1[[i]])$logLik[1])} 
 
 ## ## ## NULL MODEL 0.2 ## ## ## 
 model0.2 <- list()
-for (i in 1:8) {model0.2[[i]] = lmer(brainage_gap~ 1 + age + (1|site_t3), data=brainage_list[[i]])}
+for (i in 1:8) {model0.2[[i]] = lmer(brainage~ 1 + age + (1|site_t3), data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model0.2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model0.2_metrics[i,] = c(r.squaredGLMM(model0.2[[i]]),AIC(model0.2[[i]]),(sigma(model0.2[[i]]))^2,summary(model0.2[[i]])$logLik[1])} 
 
 ## ## ## BASELINE MODEL 1 ## ## ## 
 model1 <- list()
-for (i in 1:8) {model1[[i]] = lmer(brainage_gap~ 1 + age + sex + age:sex + (1|site_t3), data=brainage_list[[i]])}
+for (i in 1:8) {model1[[i]] = lmer(brainage~ 1 + age + sex + age:sex + (1|site_t3), data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model1_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model1_metrics[i,] = c(r.squaredGLMM(model1[[i]]),AIC(model1[[i]]),(sigma(model1[[i]]))^2,summary(model1[[i]])$logLik[1])} 
 
 ## ## ## SOCIODEMO MODEL 2 ## ## ## 
 model2 <- list()
-for (i in 1:8) {model2[[i]] = lmer(brainage_gap~ 1 + age + sex + age:sex + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income)+ as.numeric(social_visits_t3), data=brainage_list[[i]])}
+for (i in 1:8) {model2[[i]] = lmer(brainage~ 1 + age + sex + age:sex + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income)+ as.numeric(social_visits_t3), data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model2_metrics[i,] = c(r.squaredGLMM(model2[[i]]),AIC(model2[[i]]),(sigma(model2[[i]]))^2,summary(model2[[i]])$logLik[1])} 
 
 ## ## ## HEALTH MODEL 3 ## ## ## 
 model3 <- list()
-for (i in 1:8) {model3[[i]] = lmer(brainage_gap ~ 1 + age + sex + age:sex + (1|site_t3)+ BMI.2.0 + WHR.2.0 + pulse_pressure.2.0 + alcohol_drinker.2.0 + diabetic.2.0 +
+for (i in 1:8) {model3[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3)+ BMI.2.0 + WHR.2.0 + pulse_pressure.2.0 + alcohol_drinker.2.0 + diabetic.2.0 +
                     high_cholesterol.2.0 + hypertension.2.0 + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3, data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model3_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -393,7 +393,7 @@ for (i in 1:8) {model3_metrics[i,] = c(r.squaredGLMM(model3[[i]]),AIC(model3[[i]
 
 ## ## ## WELLBEING MODEL 4 ## ## ## 
 model4 <- list()
-for (i in 1:8) {model4[[i]] = lmer(brainage_gap ~ 1 + age + sex + age:sex + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
+for (i in 1:8) {model4[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
                        excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model4_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -402,7 +402,7 @@ for (i in 1:8) {model4_metrics[i,] = c(r.squaredGLMM(model4[[i]]),AIC(model4[[i]
 
 ## ## ## COGNITION MODEL 5 ## ## ## 
 model5 <- list()
-for (i in 1:8) {model5[[i]] = lmer(brainage_gap ~ 1 + age + sex + age:sex + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
+for (i in 1:8) {model5[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
                  excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model5_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -634,7 +634,7 @@ names = rownames(summary(model5[[1]])$coefficients)
 names1 = c(rep(names, 8))
 cognitive_p = data.frame(do.call(cbind, cognitive_p))
 cognitive_p$names = names1
-dp = plot(density(df$brainage_gap))
+dp = plot(density(df$brainage))
 ggsave("/tsd/p33/home/p33-maxk/export/BAG_density.pdf",dp, height = 6, width = 9)
 
 ggplot(cognitive_p, aes(x = names, y = Pr...t..)) + 
@@ -649,21 +649,21 @@ cognitive_p$names
 
 ## ## ## BASELINE MODEL 1 ## ## ## 
 model1.2 <- list()
-for (i in 1:8) {model1.2[[i]] = lmer(brainage_gap~ 1  + sex  + (1|site_t3), data=brainage_list[[i]])}
+for (i in 1:8) {model1.2[[i]] = lmer(brainage~ 1  + sex  + (1|site_t3), data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model1.2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model1.2_metrics[i,] = c(r.squaredGLMM(model1.2[[i]]),AIC(model1.2[[i]]),(sigma(model1.2[[i]]))^2,summary(model1.2[[i]])$logLik[1])} 
 
 ## ## ## SOCIODEMO MODEL 2 ## ## ## 
 model2.2 <- list()
-for (i in 1:8) {model2.2[[i]] = lmer(brainage_gap~ 1  + sex  + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income) + social_visits_t3, data=brainage_list[[i]])}
+for (i in 1:8) {model2.2[[i]] = lmer(brainage~ 1  + sex  + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income) + social_visits_t3, data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model2.2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model2.2_metrics[i,] = c(r.squaredGLMM(model2.2[[i]]),AIC(model2.2[[i]]),(sigma(model2.2[[i]]))^2,summary(model2.2[[i]])$logLik[1])} 
 
 ## ## ## HEALTH MODEL 3 ## ## ## 
 model3.2 <- list()
-for (i in 1:8) {model3.2[[i]] = lmer(brainage_gap ~ 1  + sex  + (1|site_t3)+ BMI + WHR + pulse_pressure + alcohol_drinker + diabetic +
+for (i in 1:8) {model3.2[[i]] = lmer(brainage ~ 1  + sex  + (1|site_t3)+ BMI + WHR + pulse_pressure + alcohol_drinker + diabetic +
                                      high_cholesterol + hypertension + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3, data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model3.2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -671,7 +671,7 @@ for (i in 1:8) {model3.2_metrics[i,] = c(r.squaredGLMM(model3.2[[i]]),AIC(model3
 
 ## ## ## WELLBEING MODEL 4 ## ## ## 
 model4.2 <- list()
-for (i in 1:8) {model4.2[[i]] = lmer(brainage_gap ~ 1  + sex  + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
+for (i in 1:8) {model4.2[[i]] = lmer(brainage ~ 1  + sex  + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
                                      excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 + as.numeric(social_visits_t3), data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model4.2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -680,7 +680,7 @@ for (i in 1:8) {model4.2_metrics[i,] = c(r.squaredGLMM(model4.2[[i]]),AIC(model4
 
 ## ## ## COGNITION MODEL 5 ## ## ## 
 model5.2 <- list()
-for (i in 1:8) {model5.2[[i]] = lmer(brainage_gap ~ 1  + sex  + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
+for (i in 1:8) {model5.2[[i]] = lmer(brainage ~ 1  + sex  + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
                                      excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model5.2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -878,21 +878,21 @@ for (i in 1:8){
 
 ## ## ## BASELINE MODEL 1 ## ## ## 
 Fmodel1 <- list()
-for (i in 1:8) {Fmodel1[[i]] = lmer(brainage_gap~ 1 + age  + (1|site_t3), data=brainage_females[[i]])}
+for (i in 1:8) {Fmodel1[[i]] = lmer(brainage~ 1 + age  + (1|site_t3), data=brainage_females[[i]])}
 # loop over output data to create a table with Fmodel metrics
 Fmodel1_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {Fmodel1_metrics[i,] = c(r.squaredGLMM(Fmodel1[[i]]),AIC(Fmodel1[[i]]),(sigma(Fmodel1[[i]]))^2,summary(Fmodel1[[i]])$logLik[1])} 
 
 ## ## ## SOCIODEMO Fmodel 2 ## ## ## 
 Fmodel2 <- list()
-for (i in 1:8) {Fmodel2[[i]] = lmer(brainage_gap~ 1 + age  + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income)+ as.numeric(social_visits_t3), data=brainage_females[[i]])}
+for (i in 1:8) {Fmodel2[[i]] = lmer(brainage~ 1 + age  + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income)+ as.numeric(social_visits_t3), data=brainage_females[[i]])}
 # loop over output data to create a table with Fmodel metrics
 Fmodel2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {Fmodel2_metrics[i,] = c(r.squaredGLMM(Fmodel2[[i]]),AIC(Fmodel2[[i]]),(sigma(Fmodel2[[i]]))^2,summary(Fmodel2[[i]])$logLik[1])} 
 
 ## ## ## HEALTH Fmodel 3 ## ## ## 
 Fmodel3 <- list()
-for (i in 1:8) {Fmodel3[[i]] = lmer(brainage_gap ~ 1 + age  + (1|site_t3)+ BMI.2.0 + WHR.2.0 + pulse_pressure.2.0 + alcohol_drinker.2.0 + diabetic.2.0 +
+for (i in 1:8) {Fmodel3[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3)+ BMI.2.0 + WHR.2.0 + pulse_pressure.2.0 + alcohol_drinker.2.0 + diabetic.2.0 +
                                      high_cholesterol.2.0 + hypertension.2.0 + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3, data=brainage_females[[i]])}
 # loop over output data to create a table with Fmodel metrics
 Fmodel3_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -900,7 +900,7 @@ for (i in 1:8) {Fmodel3_metrics[i,] = c(r.squaredGLMM(Fmodel3[[i]]),AIC(Fmodel3[
 
 ## ## ## WELLBEING Fmodel 4 ## ## ## 
 Fmodel4 <- list()
-for (i in 1:8) {Fmodel4[[i]] = lmer(brainage_gap ~ 1 + age  + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
+for (i in 1:8) {Fmodel4[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
                                      excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_females[[i]])}
 # loop over output data to create a table with Fmodel metrics
 Fmodel4_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -909,7 +909,7 @@ for (i in 1:8) {Fmodel4_metrics[i,] = c(r.squaredGLMM(Fmodel4[[i]]),AIC(Fmodel4[
 
 ## ## ## COGNITION Fmodel 5 ## ## ## 
 Fmodel5 <- list()
-for (i in 1:8) {Fmodel5[[i]] = lmer(brainage_gap ~ 1 + age  + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
+for (i in 1:8) {Fmodel5[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
                                      excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=brainage_females[[i]])}
 # loop over output data to create a table with Fmodel metrics
 Fmodel5_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -925,21 +925,21 @@ for (i in 1:8) {Fmodel5_metrics[i,] = c(r.squaredGLMM(Fmodel5[[i]]),AIC(Fmodel5[
 
 ## ## ## BASELINE MODEL 1 ## ## ## 
 Mmodel1 <- list()
-for (i in 1:8) {Mmodel1[[i]] = lmer(brainage_gap~ 1 + age  + (1|site_t3), data=brainage_males[[i]])}
+for (i in 1:8) {Mmodel1[[i]] = lmer(brainage~ 1 + age  + (1|site_t3), data=brainage_males[[i]])}
 # loop over output data to create a table with Mmodel metrics
 Mmodel1_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {Mmodel1_metrics[i,] = c(r.squaredGLMM(Mmodel1[[i]]),AIC(Mmodel1[[i]]),(sigma(Mmodel1[[i]]))^2,summary(Mmodel1[[i]])$logLik[1])} 
 
 ## ## ## SOCIODEMO Mmodel 2 ## ## ## 
 Mmodel2 <- list()
-for (i in 1:8) {Mmodel2[[i]] = lmer(brainage_gap~ 1 + age  + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income)+ as.numeric(social_visits_t3), data=brainage_males[[i]])}
+for (i in 1:8) {Mmodel2[[i]] = lmer(brainage~ 1 + age  + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income)+ as.numeric(social_visits_t3), data=brainage_males[[i]])}
 # loop over output data to create a table with Mmodel metrics
 Mmodel2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {Mmodel2_metrics[i,] = c(r.squaredGLMM(Mmodel2[[i]]),AIC(Mmodel2[[i]]),(sigma(Mmodel2[[i]]))^2,summary(Mmodel2[[i]])$logLik[1])} 
 
 ## ## ## HEALTH Mmodel 3 ## ## ## 
 Mmodel3 <- list()
-for (i in 1:8) {Mmodel3[[i]] = lmer(brainage_gap ~ 1 + age  + (1|site_t3)+ BMI.2.0 + WHR.2.0 + pulse_pressure.2.0 + alcohol_drinker.2.0 + diabetic.2.0 +
+for (i in 1:8) {Mmodel3[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3)+ BMI.2.0 + WHR.2.0 + pulse_pressure.2.0 + alcohol_drinker.2.0 + diabetic.2.0 +
                                       high_cholesterol.2.0 + hypertension.2.0 + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3, data=brainage_males[[i]])}
 # loop over output data to create a table with Mmodel metrics
 Mmodel3_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -947,7 +947,7 @@ for (i in 1:8) {Mmodel3_metrics[i,] = c(r.squaredGLMM(Mmodel3[[i]]),AIC(Mmodel3[
 
 ## ## ## WELLBEING Mmodel 4 ## ## ## 
 Mmodel4 <- list()
-for (i in 1:8) {Mmodel4[[i]] = lmer(brainage_gap ~ 1 + age  + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
+for (i in 1:8) {Mmodel4[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
                                       excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_males[[i]])}
 # loop over output data to create a table with Mmodel metrics
 Mmodel4_metrics = data.frame(matrix(nrow = 8, ncol = 5))
@@ -956,7 +956,7 @@ for (i in 1:8) {Mmodel4_metrics[i,] = c(r.squaredGLMM(Mmodel4[[i]]),AIC(Mmodel4[
 
 ## ## ## COGNITION Mmodel 5 ## ## ## 
 Mmodel5 <- list()
-for (i in 1:8) {Mmodel5[[i]] = lmer(brainage_gap ~ 1 + age  + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
+for (i in 1:8) {Mmodel5[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
                                       excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=brainage_males[[i]])}
 # loop over output data to create a table with Mmodel metrics
 Mmodel5_metrics = data.frame(matrix(nrow = 8, ncol = 5))
