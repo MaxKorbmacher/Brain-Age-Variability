@@ -155,16 +155,14 @@ nrow(df) - sum(is.na(df$daily_coffee_t3))
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
 
 # define a function to extract standardised beta coefficients from the mixed linear models (lmer)
-stdCoef.lmer <- function(object) {
-  sdy <- sd(attr(object, "y"))
-  sdx <- apply(attr(object, "X"), 2, sd)
+stdCoef.merMod <- function(object) {
+  sdy <- sd(getME(object,"y"))
+  sdx <- apply(getME(object,"X"), 2, sd)
   sc <- fixef(object)*sdx/sdy
-  #mimic se.ranef from pacakge "arm"
-  se.fixef <- function(obj) attr(summary(obj), "coefs")[,2]
-  se <- se.fixef(object)*sdx/sdy
-  return(list(stdcoef=sc, stdse=se))
+  se.fixef <- coef(summary(object))[,"Std. Error"]
+  se <- se.fixef*sdx/sdy
+  return(data.frame(stdcoef=sc, stdse=se))
 }
-
 
 #### starting with demographics
 mean(df$pred_age_dwMRI_test90_no_SD)
@@ -174,7 +172,7 @@ df$brainage_gap = df$pred_age_dwMRI_test90_no_SD # label perdicted age as braina
 df %>% group_by(Assessment_centre) %>% dplyr::summarize(Mean = mean(brainage_gap))
 baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df)
 summary(baseline_model)
-stdCoef.lmer(baseline_model)
+stdCoef.merMod(baseline_model)
 
 # sex
 df %>% group_by(sex) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -194,7 +192,7 @@ ethn_model = lmer(brainage_gap ~  Ethnicity+age*sex + (1|Assessment_centre), dat
 baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df_red)
 r.squaredGLMM(ethn_model) - r.squaredGLMM(baseline_model)
 anova(baseline_model, ethn_model)
-stdCoef.lmer(ethn_model)
+stdCoef.merMod(ethn_model)
 
 # income (without those who did not want to tell or didn't know)
 df %>% group_by(t3_income) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -204,7 +202,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # higher ed
 df %>% group_by(higher_education_t3) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -214,7 +212,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 #### cognitive scores
@@ -227,7 +225,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # Tower rearranging correct
@@ -238,7 +236,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # prospective memory
@@ -249,7 +247,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # fluid intel
 df %>% drop_na(fluid_intelligence_t3) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -259,7 +257,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # digits remembered
@@ -270,7 +268,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # mean number of correct pair matches across trials
 df %>% drop_na(mean_inc_pair_matches) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -280,7 +278,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 ###### life satisfaction
@@ -292,7 +290,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 #finance sat
@@ -303,7 +301,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # health sat
 df %>% drop_na(excl_sample.health_satisfaction_t3) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -313,7 +311,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # overall health rating
 df %>% drop_na(overall_health_t3) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -323,7 +321,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # family rel sat
 df %>% drop_na(excl_sample.family_rel_satisfaction_t3) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -333,7 +331,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # friend rel sat
 df %>% drop_na(excl_sample.friend_rel_satisfaction_t3) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -343,7 +341,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # happiness
 df %>% drop_na(happiness_t3) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -353,7 +351,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 #### health risk factors
@@ -365,7 +363,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # pulse pressure
@@ -376,7 +374,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # waist to hip ratio
@@ -387,7 +385,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # we can also separate by sex, as this is informative
 df %>% drop_na(WHR) %>% group_by(sex)%>% dplyr::summarize(Mean = mean(WHR), SD = sd(WHR))
@@ -401,7 +399,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # diabetes
 df %>% group_by(diabetic) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -411,7 +409,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # hypertension
@@ -422,7 +420,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 # high chol
 df %>% group_by(high_cholesterol) %>% dplyr::summarize(Mean = mean(brainage_gap))
@@ -432,7 +430,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # diagnosed vasc problems
@@ -443,7 +441,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # birth weight
@@ -454,7 +452,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 # daily coffe intake
@@ -465,7 +463,7 @@ baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
-stdCoef.lmer(var_model)
+stdCoef.merMod(var_model)
 
 
 
