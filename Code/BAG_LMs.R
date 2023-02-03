@@ -1,6 +1,7 @@
 # BAG and bio-psycho-social factors
 # BAG was calculated from diffusion data using six diffusion approaches: BRIA, DKI, DTI, SMT, mcSMT, WMTI
 # code by Max Korbmacher, 14.10.2022
+# last update: 02.02.2023 (use of standardized betas in figures)
 
 ### PREPARATION ####
 # packages
@@ -90,7 +91,7 @@ df$t3_income = factor(df$t3_income, levels = c("<£18k","£18-30k","£30-52k","�
 df$t3_income = droplevels(df$t3_income, exclude = c("£ no answer", "£ Don't know"))
 df$social_visits_t3 = factor(df$social_visits_t3, levels = c("don't know", "no friends/family outside household","Never or almost never", "Once every few months", "About once a month","About once a week", "2-4 times a week", "Almost daily"))
 df$social_visits_t3 = droplevels(df$social_visits_t3, exclude = c("don't know", "no friends/family outside household"))
- 
+
 # dplyr::rename wrongly labelled tower arranging var
 df = df %>% dplyr::rename("tower_arranging" = "matrix_puzzles_correct_t3")
 
@@ -139,7 +140,7 @@ nrow(df) - sum(is.na(df$excl_sample.family_rel_satisfaction_t3))
 nrow(df) - sum(is.na(df$excl_sample.friend_rel_satisfaction_t3))
 nrow(df) - sum(is.na(df$happiness_t3))
 
-nrow(df) - sum(is.na(df$BMI)) ### health risk factors
+nrow(df) - sum(is.na(df$BMI)) ### Health and Lifestyle Factors
 nrow(df) - sum(is.na(df$pulse_pressure))
 nrow(df) - sum(is.na(df$WHR))
 table(df$smoking)
@@ -196,8 +197,8 @@ stdCoef.merMod(ethn_model)
 
 # income (without those who did not want to tell or didn't know)
 df %>% group_by(t3_income) %>% dplyr::summarize(Mean = mean(brainage_gap))
-df_red = df %>% select(income,brainage_gap, age,sex, Assessment_centre) %>% na.omit()
-var_model = lmer(brainage_gap ~  income+age*sex + (1|Assessment_centre), data = df_red)
+df_red = df %>% select(t3_income,brainage_gap, age,sex, Assessment_centre) %>% na.omit()
+var_model = lmer(brainage_gap ~  t3_income+age*sex + (1|Assessment_centre), data = df_red)
 baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df_red)
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
@@ -213,6 +214,7 @@ r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
 anova(baseline_model, var_model)
 stdCoef.merMod(var_model)
+
 
 
 #### cognitive scores
@@ -354,7 +356,7 @@ anova(baseline_model, var_model)
 stdCoef.merMod(var_model)
 
 
-#### health risk factors
+#### Health and Lifestyle Factors
 # BMI
 df %>% drop_na(BMI) %>% dplyr::summarize(Mean = mean(brainage_gap))
 df_red = df %>% select(BMI,brainage_gap, age,sex, Assessment_centre) %>% na.omit()
@@ -434,9 +436,9 @@ stdCoef.merMod(var_model)
 
 
 # diagnosed vasc problems
-df %>% group_by(diagnosed_vascular_problem.x) %>% dplyr::summarize(Mean = mean(brainage_gap))
-df_red = df %>% select(diagnosed_vascular_problem.x,brainage_gap, age,sex, Assessment_centre) %>% na.omit()
-var_model = lmer(brainage_gap ~  diagnosed_vascular_problem.x+age*sex + (1|Assessment_centre), data = df_red)
+df %>% group_by(diagnosed_vascular_problem) %>% dplyr::summarize(Mean = mean(brainage_gap))
+df_red = df %>% select(diagnosed_vascular_problem,brainage_gap, age,sex, Assessment_centre) %>% na.omit()
+var_model = lmer(brainage_gap ~  diagnosed_vascular_problem+age*sex + (1|Assessment_centre), data = df_red)
 baseline_model = lmer(brainage_gap ~  age*sex + (1|Assessment_centre), data = df_red)
 r.squaredGLMM(var_model) - r.squaredGLMM(baseline_model)
 summary(var_model)
@@ -465,8 +467,13 @@ summary(var_model)
 anova(baseline_model, var_model)
 stdCoef.merMod(var_model)
 
+#Group diff:
+# sex = -0.09
+# hypert = 0.06 & vascular diag = 0.06
 
-
+# PP = 0.05
+# WHR = 0.07
+# overall health = 0.04
 
 # MIXED MODELS ####
 
@@ -591,7 +598,7 @@ for (i in 1:8) {model2_metrics[i,] = c(r.squaredGLMM(model2[[i]]),AIC(model2[[i]
 ## ## ## HEALTH MODEL 3 ## ## ## 
 model3 <- list()
 for (i in 1:8) {model3[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3)+ BMI + WHR + pulse_pressure + alcohol_drinker + diabetic +
-                    high_cholesterol + hypertension + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3 + smoking, data=brainage_list[[i]])}
+                                     high_cholesterol + hypertension + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3 + smoking, data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model3_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model3_metrics[i,] = c(r.squaredGLMM(model3[[i]]),AIC(model3[[i]]),(sigma(model3[[i]]))^2,summary(model3[[i]])$logLik[1])} 
@@ -599,7 +606,7 @@ for (i in 1:8) {model3_metrics[i,] = c(r.squaredGLMM(model3[[i]]),AIC(model3[[i]
 ## ## ## WELLBEING MODEL 4 ## ## ## 
 model4 <- list()
 for (i in 1:8) {model4[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
-                       excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_list[[i]])}
+                                     excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model4_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model4_metrics[i,] = c(r.squaredGLMM(model4[[i]]),AIC(model4[[i]]),(sigma(model4[[i]]))^2,summary(model4[[i]])$logLik[1])} 
@@ -608,7 +615,7 @@ for (i in 1:8) {model4_metrics[i,] = c(r.squaredGLMM(model4[[i]]),AIC(model4[[i]
 ## ## ## COGNITION MODEL 5 ## ## ## 
 model5 <- list()
 for (i in 1:8) {model5[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
-                 excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=brainage_list[[i]])}
+                                     excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model5_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model5_metrics[i,] = c(r.squaredGLMM(model5[[i]]),AIC(model5[[i]]),(sigma(model5[[i]]))^2,summary(model5[[i]])$logLik[1])} 
@@ -621,10 +628,10 @@ output$Model = c(replicate(8,"random only"), replicate(8,"sex"), replicate(8,"ba
 dMRI_model = c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 output$BAG = c(replicate(7, dMRI_model))
 output = output %>% dplyr::rename("R2M"="X1",
-                  "R2C" = "X2",
-                  "AIC" = "X3",
-                  "sig2" = "X4",
-                  "logLik" = "X5")
+                                  "R2C" = "X2",
+                                  "AIC" = "X3",
+                                  "sig2" = "X4",
+                                  "logLik" = "X5")
 write.csv(output, "/cluster/projects/p33/users/maxk/UKB/Frontiers_export/ST10.csv")
 
 output %>% filter(Model == "health") %>% dplyr::summarize(MeanM = mean(R2M), SDM = sd(R2M),MeanC = mean(R2C), SDC = sd(R2C))
@@ -645,22 +652,22 @@ for (i in 1:8){baseline_anova[[i]] = anova(model0.1[[i]], model0.2[[i]], model1[
 baseline_table = baseline_anova %>% bind_rows() %>% group_split()
 baseline_table = do.call(rbind.data.frame,baseline_table)
 baseline_table = baseline_table%>% dplyr::select(-npar, -Df) %>% mutate(Model = c(replicate(3,"FULL"),
-                                                          replicate(3,"MEAN"), 
-                                                          replicate(3,"BRIA"),
-                                                          replicate(3,"DKI"),
-                                                          replicate(3,"DTI"),
-                                                          replicate(3,"SMT"),
-                                                          replicate(3,"SMT_mc"),
-                                                          replicate(3,"WMTI")))
+                                                                                  replicate(3,"MEAN"), 
+                                                                                  replicate(3,"BRIA"),
+                                                                                  replicate(3,"DKI"),
+                                                                                  replicate(3,"DTI"),
+                                                                                  replicate(3,"SMT"),
+                                                                                  replicate(3,"SMT_mc"),
+                                                                                  replicate(3,"WMTI")))
 # this table indicates differences between (1) a model containing nothin but RF scanner site, (2) sex & RF, (3) sex*age & RF
 baseline_table
 
 # re-fit baseline models for comparison 
 # Comparison of baseline with model 2
 for (i in 1:8) {data=na.omit(brainage_list[[i]][ , all.vars(formula(model2[[i]]))])
-  model1[[i]] = lmer(brainage~ 1 + sex*age + (1|site_t3), data=data)
-  model2[[i]] = lmer(brainage~ 1 + age + sex + age:sex + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income)+ as.numeric(social_visits_t3), data=data)
-  } # re-fit based on model2 data
+model1[[i]] = lmer(brainage~ 1 + sex*age + (1|site_t3), data=data)
+model2[[i]] = lmer(brainage~ 1 + age + sex + age:sex + (1|site_t3)+ Ethnicity + higher_education_t3 + as.numeric(t3_income)+ as.numeric(social_visits_t3), data=data)
+} # re-fit based on model2 data
 
 model2_anova = list()
 for (i in 1:8){model2_anova[[i]] = anova(model1[[i]], model2[[i]])} # calculate differences
@@ -689,7 +696,7 @@ model3_table = model3_table%>% select(-npar, -Df) %>% mutate(Model = mod_nam)
 for (i in 1:8) {data=na.omit(brainage_list[[i]][ , all.vars(formula(model4[[i]]))])
 model1[[i]] = lmer(brainage~ 1 + sex*age + (1|site_t3), data=data)
 model4[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
-                                     excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=data)}
+                     excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=data)}
 model4_anova = list()
 for (i in 1:8){model4_anova[[i]] = anova(model1[[i]], model4[[i]])} # calculate differences
 # make table
@@ -701,7 +708,7 @@ model4_table = model4_table%>% select(-npar, -Df) %>% mutate(Model = mod_nam)
 for (i in 1:8) {data=na.omit(brainage_list[[i]][ , all.vars(formula(model5[[i]]))])
 model1[[i]] = lmer(brainage~ 1 + sex*age + (1|site_t3), data=data)
 model5[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
-                                     excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=data)}
+                     excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=data)}
 model5_anova = list()
 for (i in 1:8){model5_anova[[i]] = anova(model1[[i]], model5[[i]])} # calculate differences
 # make table
@@ -710,7 +717,7 @@ model5_table = do.call(rbind.data.frame,model5_table)
 model5_table = model5_table%>% select(-npar, -Df) %>% mutate(Model = mod_nam)
 
 ## save tables
-## This first table is not used in the supplement or manuscript. However, it can adress questions on the differences between null and baseline models
+## This first table is not used in the supplement or manuscript. However, it can address questions on the differences between null and baseline models
 write.csv(baseline_table, "/cluster/projects/p33/users/maxk/UKB/Frontiers_export/ST2_0.csv")
 write.csv(model2_table, "/cluster/projects/p33/users/maxk/UKB/Frontiers_export/ST2_1.csv")
 write.csv(model3_table,"/cluster/projects/p33/users/maxk/UKB/Frontiers_export/ST2_2.csv")
@@ -728,88 +735,84 @@ model1 <- list()
 for (i in 1:8) {model1[[i]] = lmer(brainage_gap~ 1 + age + sex + age:sex + (1|site_t3), data=brainage_list[[i]])}
 baseline = list()
 for (i in 1:8){
-  baseline[[i]] = cbind(summary(model1[[i]])$coefficients[2:4,1], confint(model1[[i]])[4:6,], c("Age","Sex","Age*Sex"), c(replicate(3, "Baseline")))
-} # to get the intercept as well: # baseline[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "Baseline")))
+  baseline[[i]] = cbind(stdCoef.merMod(model1[[i]])[2:4,1], stdCoef.merMod(model1[[i]])[2:4,2], c("Age","Sex","Age*Sex"), c(replicate(3, "Baseline")))
+} 
 baseline_tab = data.frame(do.call(rbind, baseline))
 dMRI_model_list = c(replicate(3,"FULL"), replicate(3,"MEAN"), replicate(3,"BRIA"), replicate(3,"DKI"),
                     replicate(3,"DTI"), replicate(3,"SMT"), replicate(3,"SMT_mc"), replicate(3,"WMTI"))
 baseline_tab$Model = dMRI_model_list
-baseline_tab = baseline_tab %>% dplyr::rename("Beta" = "V1",
-                        "CI2.5" = "X2.5..",
-                        "CI97.5" = "X97.5..",
-                        "Variable" = "V4")
+baseline_tab = baseline_tab %>% dplyr::rename("Beta" = "X1",
+                                              "SD" = "X2",
+                                              "Variable" = "X3",
+                                              "Predictors" = "X4")
 levels(baseline_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 baseline_tab$Beta = as.numeric(as.character(baseline_tab$Beta))
-baseline_tab$CI2.5 = as.numeric(as.character(baseline_tab$CI2.5))
-baseline_tab$CI97.5 = as.numeric(as.character(baseline_tab$CI97.5))
+baseline_tab$SD = as.numeric(as.character(baseline_tab$SD))
 baseline_tab$Model = (as.factor(baseline_tab$Model))
 baseline_tab$Variable = (as.factor(baseline_tab$Variable))
 
 # Basic bar plot
 baseline_plot = ggplot(baseline_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw()
 
 ####################### SOCIODEMO MODEL
 sociodemo = list()
 for (i in 1:8){
-  sociodemo[[i]] = cbind(summary(model2[[i]])$coefficients[2:8,1], confint(model2[[i]])[4:10,], c("Age","Sex","Ethnicity","Higher Education","Income","Social Visits","Age*Sex"), c(replicate(5, "sociodemo")))
-} # to get the intercept as well: # sociodemo[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "sociodemo")))
-
+  sociodemo[[i]] = cbind(stdCoef.merMod(model2[[i]])[2:8,1], stdCoef.merMod(model2[[i]])[2:8,2], c("Age","Sex","Ethnicity","Higher Education","Income","Social Visits","Age*Sex"), c(replicate(7, "sociodemo")))
+} # to get the intercept as well: # sociodemo[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "sociodemo")))
 sociodemo_tab = data.frame(do.call(rbind, sociodemo))
 dMRI_model_list = c(replicate(7,"FULL"), replicate(7,"MEAN"), replicate(7,"BRIA"), replicate(7,"DKI"),
                     replicate(7,"DTI"), replicate(7,"SMT"), replicate(7,"SMT_mc"), replicate(7,"WMTI"))
 sociodemo_tab$Model = dMRI_model_list
-sociodemo_tab = sociodemo_tab %>% dplyr::rename("Beta" = "V1",
-                                       "CI2.5" = "X2.5..",
-                                       "CI97.5" = "X97.5..",
-                                       "Variable" = "V4")
+sociodemo_tab = sociodemo_tab %>% dplyr::rename("Beta" = "X1",
+                                              "SD" = "X2",
+                                              "Variable" = "X3",
+                                              "Predictors" = "X4")
 levels(sociodemo_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 sociodemo_tab$Beta = as.numeric(as.character(sociodemo_tab$Beta))
-sociodemo_tab$CI2.5 = as.numeric(as.character(sociodemo_tab$CI2.5))
-sociodemo_tab$CI97.5 = as.numeric(as.character(sociodemo_tab$CI97.5))
+sociodemo_tab$SD = as.numeric(as.character(sociodemo_tab$SD))
 sociodemo_tab$Model = (as.factor(sociodemo_tab$Model))
-sociodemo_tab$Variable = factor(sociodemo_tab$Variable, levels =c("Age","Sex","Age*Sex","Ethnicity","Income","Higher Education", "Social Visits"))
+sociodemo_tab$Variable = (as.factor(sociodemo_tab$Variable))
 
 # Basic plot
 sociodemo_plot = ggplot(sociodemo_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw()
 ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersSociodemoPlot.pdf",sociodemo_plot, height = 6, width = 9)
-#ggsave("/tsd/p33/home/p33-maxk/export/FrontiersSociodemoPlot.pdf",sociodemo_plot, height = 6, width = 9)
+ggsave("/tsd/p33/home/p33-maxk/export/FrontiersSociodemoPlot.pdf",sociodemo_plot, height = 6, width = 9)
 
 ################ HEALTH MODEL
 health = list()
 for (i in 1:8){
-  health[[i]] = cbind(summary(model3[[i]])$coefficients[2:16,1], confint(model3[[i]])[4:18,], c("Age","Sex","BMI","WHR","PP","Alcohol","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Birth Weight","Sleep","Coffee","Smoking","Age*Sex"), c(replicate(18, "health")))
-} # to get the intercept as well: # health[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "health")))
+  health[[i]] = cbind(stdCoef.merMod(model3[[i]])[2:16,1], stdCoef.merMod(model3[[i]])[2:16,2], c("Age","Sex","BMI","WHR","PP","Alcohol","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Birth Weight","Sleep","Coffee","Smoking","Age*Sex"), c(replicate(15, "health")))
+} # to get the intercept as well: # health[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "health")))
 
 health_tab = data.frame(do.call(rbind, health))
 dMRI_model_list = c(replicate(15,"FULL"), replicate(15,"MEAN"), replicate(15,"BRIA"), replicate(15,"DKI"),
                     replicate(15,"DTI"), replicate(15,"SMT"), replicate(15,"SMT_mc"), replicate(15,"WMTI"))
 health_tab$Model = dMRI_model_list
-health_tab = health_tab %>% dplyr::rename("Beta" = "V1",
-                                         "CI2.5" = "X2.5..",
-                                         "CI97.5" = "X97.5..",
-                                         "Variable" = "V4")
+health_tab = health_tab %>% dplyr::rename("Beta" = "X1",
+                                          "SD" = "X2",
+                                          "Variable" = "X3",
+                                          "Predictors" = "X4")
 levels(health_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 health_tab$Beta = as.numeric(as.character(health_tab$Beta))
-health_tab$CI2.5 = as.numeric(as.character(health_tab$CI2.5))
-health_tab$CI97.5 = as.numeric(as.character(health_tab$CI97.5))
+health_tab$SD = as.numeric(as.character(health_tab$SD))
 health_tab$Model = (as.factor(health_tab$Model))
-health_tab$Variable = (factor(health_tab$Variable, levels= c("Age","Sex","Age*Sex","BMI","WHR","Birth Weight","PP","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Sleep","Coffee","Alcohol", "Smoking")))
+health_tab$Variable = (as.factor(health_tab$Variable))
 
 # Basic bar plot
 health_plot = ggplot(health_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw()+ theme(axis.text.x = element_text(angle = 45))
 ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersHealthPlot.pdf",health_plot, height = 6, width = 9)
@@ -818,70 +821,61 @@ ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersHealthPlot.pdf",hea
 ################ WELLBEING MODEL
 wellbeing = list()
 for (i in 1:8){
-  wellbeing[[i]] = cbind(summary(model4[[i]])$coefficients[2:11,1], confint(model4[[i]])[4:13,], c("Age","Sex","Job Satisfaction", "Finance Satisfaction", "Health Satisfaction",  "Family Relationships Satisfaction", "Happiness", "Friend Relationship Satisfaction","Self-Rated Health","Age*Sex"), c(replicate(11, "wellbeing")))
-} # to get the intercept as well: # wellbeing[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "wellbeing")))
+  wellbeing[[i]] = cbind(stdCoef.merMod(model4[[i]])[2:11,1], stdCoef.merMod(model4[[i]])[2:11,2], c("Age","Sex","Job Satisfaction", "Finance Satisfaction", "Health Satisfaction",  "Family Relationships Satisfaction", "Happiness", "Friend Relationship Satisfaction","Self-Rated Health","Age*Sex"), c(replicate(10, "wellbeing")))
+} # to get the intercept as well: # wellbeing[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "wellbeing")))
 wellbeing_tab = data.frame(do.call(rbind, wellbeing))
 dMRI_model_list = c(replicate(10,"FULL"), replicate(10,"MEAN"), replicate(10,"BRIA"), replicate(10,"DKI"),
                     replicate(10,"DTI"), replicate(10,"SMT"), replicate(10,"SMT_mc"), replicate(10,"WMTI"))
 wellbeing_tab$Model = dMRI_model_list
-wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "V1",
-                                   "CI2.5" = "X2.5..",
-                                   "CI97.5" = "X97.5..",
-                                   "Variable" = "V4")
+wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(wellbeing_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 wellbeing_tab$Beta = as.numeric(as.character(wellbeing_tab$Beta))
-wellbeing_tab$CI2.5 = as.numeric(as.character(wellbeing_tab$CI2.5))
-wellbeing_tab$CI97.5 = as.numeric(as.character(wellbeing_tab$CI97.5))
+wellbeing_tab$SD = as.numeric(as.character(wellbeing_tab$SD))
 wellbeing_tab$Model = (as.factor(wellbeing_tab$Model))
 wellbeing_tab$Variable = (factor(wellbeing_tab$Variable, levels = c("Age","Sex","Age*Sex","Job Satisfaction", "Finance Satisfaction", "Self-Rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Friend Relationship Satisfaction","Happiness")))
 wellbeing_tab = na.omit(wellbeing_tab)
 # Basic bar plot
 wellbeing_plot =ggplot(wellbeing_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw() + theme(axis.text.x = element_text(angle = 45))
 ggsave("/cluster/projects/p33/users/maxk/UKB/export/Figure4.pdf",wellbeing_plot, height = 6, width = 9)
 #ggsave("/tsd/p33/home/p33-maxk/export/FrontiersWellbeingPlot.pdf",wellbeing_plot, height = 6, width = 9)
 
 
-
 ################ COGNIION MODEL
 cognition = list()
 for (i in 1:8){
-  cognition[[i]] = cbind(summary(model5[[i]])$coefficients[2:11,1], confint(model5[[i]])[4:13,], c("Age","Sex","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered","Age*Sex"), c(replicate(10, "cognition")))
-} # to get the intercept as well: # cognition[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "cognition")))
+  cognition[[i]] = cbind(stdCoef.merMod(model5[[i]])[2:11,1], stdCoef.merMod(model5[[i]])[2:11,2], c("Age","Sex","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered","Age*Sex"), c(replicate(10, "cognition")))
+} # to get the intercept as well: # cognition[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "cognition")))
 cognition_tab = data.frame(do.call(rbind, cognition))
 dMRI_model_list = c(replicate(10,"FULL"), replicate(10,"MEAN"), replicate(10,"BRIA"), replicate(10,"DKI"),
                     replicate(10,"DTI"), replicate(10,"SMT"), replicate(10,"SMT_mc"), replicate(10,"WMTI"))
 cognition_tab$Model = dMRI_model_list
-cognition_tab = cognition_tab %>% dplyr::rename("Beta" = "V1",
-                                         "CI2.5" = "X2.5..",
-                                         "CI97.5" = "X97.5..",
-                                         "Variable" = "V4")
+cognition_tab = cognition_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(cognition_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 cognition_tab$Beta = as.numeric(as.character(cognition_tab$Beta))
-cognition_tab$CI2.5 = as.numeric(as.character(cognition_tab$CI2.5))
-cognition_tab$CI97.5 = as.numeric(as.character(cognition_tab$CI97.5))
+cognition_tab$SD = as.numeric(as.character(cognition_tab$SD))
 cognition_tab$Model = (as.factor(cognition_tab$Model))
 cognition_tab$Variable = (factor(cognition_tab$Variable, levels = c("Age","Sex","Age*Sex","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered")))
 
 # Basic bar plot
 cognition_plot =ggplot(cognition_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw() + theme(axis.text.x = element_text(angle = 45))
 ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersCognitionPlot.pdf",cognition_plot, height = 6, width = 9)
 #ggsave("/tsd/p33/home/p33-maxk/export/FrontiersCognitionPlot.pdf",cognition_plot, height = 6, width = 9)
-
-# merge plots (messes up format, not yet considered)
-#plotall = ggarrange(sociodemo_plot, health_plot, wellbeing_plot, cognition_plot, ncol = 1, nrow = 4, common.legend = T,legend = "bottom")
-#ggsave("/tsd/p33/home/p33-maxk/export/testtest.pdf",plotall, height = 18, width = 12)
-#ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersSF3.pdf",plotall, height = 18, width = 12)
-
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #
 ## fourth, compute P-vals for predictors  #####
@@ -958,13 +952,13 @@ WMTI = merge(df_new, BAG_WMTI, by = "eid")
 FULL = df_new
 FULL$age = df$age
 
-MEAN = MEAN %>% dplyr::rename("brainage" = "pred_age_MEAN_no_SD_test")
-BRIA= BRIA %>% dplyr::rename("brainage" = "pred_age_Bayes_no_SD_test")
-DKI= DKI %>% dplyr::rename("brainage" = "pred_age_DKI_no_SD_test")
-DTI= DTI %>% dplyr::rename("brainage" = "pred_age_DTI_no_SD_test")
-SMT= SMT %>% dplyr::rename("brainage" = "pred_age_SMT_no_SD_test")
-SMT_mc= SMT_mc %>% dplyr::rename("brainage" = "pred_age_SMT_mc_no_SD_test")
-WMTI = WMTI %>% dplyr::rename("brainage" = "pred_age_WMTI_no_SD_test")
+# MEAN = MEAN %>% dplyr::rename("brainage" = "pred_age_MEAN_no_SD_test")
+# BRIA= BRIA %>% dplyr::rename("brainage" = "pred_age_Bayes_no_SD_test")
+# DKI= DKI %>% dplyr::rename("brainage" = "pred_age_DKI_no_SD_test")
+# DTI= DTI %>% dplyr::rename("brainage" = "pred_age_DTI_no_SD_test")
+# SMT= SMT %>% dplyr::rename("brainage" = "pred_age_SMT_no_SD_test")
+# SMT_mc= SMT_mc %>% dplyr::rename("brainage" = "pred_age_SMT_mc_no_SD_test")
+# WMTI = WMTI %>% dplyr::rename("brainage" = "pred_age_WMTI_no_SD_test")
 FULL = FULL %>% dplyr::rename("brainage" = "pred_age_dwMRI_test90_no_SD")
 brainage_list = list(FULL, MEAN, BRIA, DKI, DTI, SMT, SMT_mc, WMTI) # just as a refresher
 # split each data frame in list by sex
@@ -998,7 +992,7 @@ for (i in 1:8) {Fmodel2_metrics[i,] = c(r.squaredGLMM(Fmodel2[[i]]),AIC(Fmodel2[
 ## ## ## HEALTH Fmodel 3 ## ## ## 
 Fmodel3 <- list()
 for (i in 1:8) {Fmodel3[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3)+ BMI + WHR + pulse_pressure + alcohol_drinker + diabetic +
-                                     high_cholesterol + hypertension + diagnosed_vascular_problem.x + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3 + smoking, data=brainage_females[[i]])}
+                                      high_cholesterol + hypertension + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3 + smoking, data=brainage_females[[i]])}
 # loop over output data to create a table with Fmodel metrics
 Fmodel3_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {Fmodel3_metrics[i,] = c(r.squaredGLMM(Fmodel3[[i]]),AIC(Fmodel3[[i]]),(sigma(Fmodel3[[i]]))^2,summary(Fmodel3[[i]])$logLik[1])} 
@@ -1006,7 +1000,7 @@ for (i in 1:8) {Fmodel3_metrics[i,] = c(r.squaredGLMM(Fmodel3[[i]]),AIC(Fmodel3[
 ## ## ## WELLBEING Fmodel 4 ## ## ## 
 Fmodel4 <- list()
 for (i in 1:8) {Fmodel4[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
-                                     excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_females[[i]])}
+                                      excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + happiness_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_females[[i]])}
 # loop over output data to create a table with Fmodel metrics
 Fmodel4_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {Fmodel4_metrics[i,] = c(r.squaredGLMM(Fmodel4[[i]]),AIC(Fmodel4[[i]]),(sigma(Fmodel4[[i]]))^2,summary(Fmodel4[[i]])$logLik[1])} 
@@ -1015,7 +1009,7 @@ for (i in 1:8) {Fmodel4_metrics[i,] = c(r.squaredGLMM(Fmodel4[[i]]),AIC(Fmodel4[
 ## ## ## COGNITION Fmodel 5 ## ## ## 
 Fmodel5 <- list()
 for (i in 1:8) {Fmodel5[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
-                                     excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=brainage_females[[i]])}
+                                      excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + matrix_puzzles_solved_t3 + digits_remembered_t3, data=brainage_females[[i]])}
 # loop over output data to create a table with Fmodel metrics
 Fmodel5_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {Fmodel5_metrics[i,] = c(r.squaredGLMM(Fmodel5[[i]]),AIC(Fmodel5[[i]]),(sigma(Fmodel5[[i]]))^2,summary(Fmodel5[[i]])$logLik[1])} 
@@ -1045,7 +1039,7 @@ for (i in 1:8) {Mmodel2_metrics[i,] = c(r.squaredGLMM(Mmodel2[[i]]),AIC(Mmodel2[
 ## ## ## HEALTH Mmodel 3 ## ## ## 
 Mmodel3 <- list()
 for (i in 1:8) {Mmodel3[[i]] = lmer(brainage ~ 1 + age  + (1|site_t3)+ BMI + WHR + pulse_pressure + alcohol_drinker + diabetic +
-                                      high_cholesterol + hypertension + diagnosed_vascular_problem.x + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3 + smoking, data=brainage_males[[i]])}
+                                      high_cholesterol + hypertension + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3 + smoking, data=brainage_males[[i]])}
 # loop over output data to create a table with Mmodel metrics
 Mmodel3_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {Mmodel3_metrics[i,] = c(r.squaredGLMM(Mmodel3[[i]]),AIC(Mmodel3[[i]]),(sigma(Mmodel3[[i]]))^2,summary(Mmodel3[[i]])$logLik[1])} 
@@ -1082,22 +1076,22 @@ Foutput$Model = c(replicate(8,"baseline"), replicate(8,"sociodemo"), replicate(8
 dMRI_model = c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 Foutput$BAG = c(replicate(5, dMRI_model))
 Foutput = Foutput %>% dplyr::rename("R2M"="X1",
-                           "R2C" = "X2",
-                           "AIC" = "X3",
-                           "sig2" = "X4",
-                           "logLik" = "X5")
-write.csv(Foutput, "/cluster/projects/p33/users/maxk/UKB/export/FrontiersST3_females.csv")
+                                    "R2C" = "X2",
+                                    "AIC" = "X3",
+                                    "sig2" = "X4",
+                                    "logLik" = "X5")
+write.csv(Foutput, "/cluster/projects/p33/users/maxk/UKB/Frontiers_export//FrontiersST3_females.csv")
 # males
 Moutput = rbind(Mmodel1_metrics, Mmodel2_metrics, Mmodel3_metrics, Mmodel4_metrics, Mmodel5_metrics)
 Moutput$Model = c(replicate(8,"baseline"), replicate(8,"sociodemo"), replicate(8,"health"), replicate(8,"wellbeing"), replicate(8,"cognition"))
 dMRI_model = c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 Moutput$BAG = c(replicate(5, dMRI_model))
 Moutput = Moutput %>% dplyr::rename("R2M"="X1",
-                             "R2C" = "X2",
-                             "AIC" = "X3",
-                             "sig2" = "X4",
-                             "logLik" = "X5")
-write.csv(Moutput, "/cluster/projects/p33/users/maxk/UKB/export/FrontiersST3_males.csv")
+                                    "R2C" = "X2",
+                                    "AIC" = "X3",
+                                    "sig2" = "X4",
+                                    "logLik" = "X5")
+write.csv(Moutput, "/cluster/projects/p33/users/maxk/UKB/Frontiers_export/FrontiersST3_males.csv")
 
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -1109,30 +1103,29 @@ write.csv(Moutput, "/cluster/projects/p33/users/maxk/UKB/export/FrontiersST3_mal
 ####################### SOCIODEMO MODEL
 sociodemo = list()
 for (i in 1:8){
-  sociodemo[[i]] = cbind(summary(Fmodel2[[i]])$coefficients[2:6,1], confint(Fmodel2[[i]])[4:8,], c("Age","Ethnicity","Higher Education","Income","Social Visits"), c(replicate(5, "sociodemo")))
-} # to get the intercept as well: # sociodemo[[i]] = cbind(summary(Fmodel1[[i]])$coefficients[,1], confint(Fmodel1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "sociodemo")))
+  sociodemo[[i]] = cbind(stdCoef.merMod(Fmodel2[[i]])[2:6,1], stdCoef.merMod(Fmodel2[[i]])[2:6,2], c("Age","Ethnicity","Higher Education","Income","Social Visits"), c(replicate(5, "sociodemo")))
+} # to get the intercept as well: # sociodemo[[i]] = cbind(stdCoef.merMod(Fmodel1[[i]])[,1], confint(Fmodel1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "sociodemo")))
 sociodemo_tab = data.frame(do.call(rbind, sociodemo))
 dMRI_model_list = c(replicate(5,"FULL"), replicate(5,"MEAN"), replicate(5,"BRIA"), replicate(5,"DKI"),
                     replicate(5,"DTI"), replicate(5,"SMT"), replicate(5,"SMT_mc"), replicate(5,"WMTI"))
 sociodemo_tab$Model = dMRI_model_list
-sociodemo_tab = sociodemo_tab %>% dplyr::rename("Beta" = "V1",
-                                         "CI2.5" = "X2.5..",
-                                         "CI97.5" = "X97.5..",
-                                         "Variable" = "V4")
+sociodemo_tab = sociodemo_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(sociodemo_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 sociodemo_tab$Beta = as.numeric(as.character(sociodemo_tab$Beta))
-sociodemo_tab$CI2.5 = as.numeric(as.character(sociodemo_tab$CI2.5))
-sociodemo_tab$CI97.5 = as.numeric(as.character(sociodemo_tab$CI97.5))
+sociodemo_tab$SD = as.numeric(as.character(sociodemo_tab$SD))
 sociodemo_tab$Model = (as.factor(sociodemo_tab$Model))
 sociodemo_tab$Variable = factor(sociodemo_tab$Variable, levels =c("Age","Ethnicity","Income","Higher Education", "Social Visits"))
 
 # Basic plot
 Fsociodemo_plot = ggplot(sociodemo_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.2)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(title = "Females: Brain Age ~ Sociodemographic Factors",x="Predictors of BAG", y = "Beta with 95% CI")+
-  ylim(-1,1) + theme_bw()
-#ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersFSociodemoPlot.pdf",Fsociodemo_plot, height = 6, width = 9)
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(title = "Females: Brain Age ~ Sociodemographic Factors",x="Predictors of BAG", y = "Standardized Beta ± SD")+
+  theme_bw()
+#ggsave("/cluster/projects/p33/users/maxk/UKB/Frontiers_export/FrontiersFSociodemoPlot.pdf",Fsociodemo_plot, height = 6, width = 9)
 #ggsave("/tsd/p33/home/p33-maxk/export/FrontiersFSociodemoPlot.pdf",Fsociodemo_plot, height = 6, width = 9)
 
 ################ HEALTH MODEL
@@ -1140,94 +1133,90 @@ pred_names = c("Age","BMI","WHR","PP","Alcohol","Diabetic","High Chol","Hyperten
 
 health = list()
 for (i in 1:8){
-  health[[i]] = cbind(summary(Fmodel3[[i]])$coefficients[2:13,1], confint(Fmodel3[[i]])[4:15,],pred_names, c(replicate(18, "health")))
-} # to get the intercept as well: # health[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "health")))
+  health[[i]] = cbind(stdCoef.merMod(Fmodel3[[i]])[2:14,1], stdCoef.merMod(Fmodel3[[i]])[2:14,2],pred_names, c(replicate(13, "health")))
+} # to get the intercept as well: # health[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "health")))
 
 health_tab = data.frame(do.call(rbind, health))
 dMRI_model_list = c(replicate(length(pred_names),"FULL"), replicate(length(pred_names),"MEAN"), replicate(length(pred_names),"BRIA"), replicate(length(pred_names),"DKI"),
                     replicate(length(pred_names),"DTI"), replicate(length(pred_names),"SMT"), replicate(length(pred_names),"SMT_mc"), replicate(length(pred_names),"WMTI"))
 health_tab$Model = dMRI_model_list
 health_tab = health_tab %>% dplyr::rename("Beta" = "V1",
-                                   "CI2.5" = "X2.5..",
-                                   "CI97.5" = "X97.5..",
-                                   "Variable" = "pred_names")
+                                          "SD" = "V2",
+                                          "Predictors" = "V4",
+                                          "Variable" = "pred_names")
 levels(health_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 health_tab$Beta = as.numeric(as.character(health_tab$Beta))
-health_tab$CI2.5 = as.numeric(as.character(health_tab$CI2.5))
-health_tab$CI97.5 = as.numeric(as.character(health_tab$CI97.5))
+health_tab$SD = as.numeric(as.character(health_tab$SD))
 health_tab$Model = (as.factor(health_tab$Model))
 health_tab$Variable = (factor(health_tab$Variable, levels= c("Age","BMI","WHR","Birth Weight","PP","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Sleep","Coffee","Alcohol", "Smoking")))
 
 # Basic bar plot
 Fhealth_plot = ggplot(health_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.2)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(title = "Females: Brain Age ~ Health Risk Factors",x="Predictors of BAG", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(title = "Females: Brain Age ~ Health and Lifestyle Factors",x="Predictors of BAG", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
-  theme_bw()+ theme(axis.text.x = element_text(angle = 45))+ ylim(-1,8)
+  theme_bw()+ theme(axis.text.x = element_text(angle = 45))
 #ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersFHealthPlot.pdf",Fhealth_plot, height = 6, width = 9)
 ##ggsave("/tsd/p33/home/p33-maxk/export/FrontiersFHealthPlot.pdf",Fhealth_plot, height = 6, width = 9)
 
 ################ WELLBEING MODEL
 wellbeing = list()
 for (i in 1:8){
-  wellbeing[[i]] = cbind(summary(Fmodel4[[i]])$coefficients[2:9,1], confint(Fmodel4[[i]])[4:11,], c("Age","Job Satisfaction", "Finance Satisfaction", "Self-rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Happiness", "Friend Relationship Satisfaction"), c(replicate(11, "wellbeing")))
-} # to get the intercept as well: # wellbeing[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "wellbeing")))
+  wellbeing[[i]] = cbind(stdCoef.merMod(Fmodel4[[i]])[2:9,1], stdCoef.merMod(Fmodel4[[i]])[2:9,2], c("Age","Job Satisfaction", "Finance Satisfaction", "Self-rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Happiness", "Friend Relationship Satisfaction"), c(replicate(8, "wellbeing")))
+} # to get the intercept as well: # wellbeing[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "wellbeing")))
 wellbeing_tab = data.frame(do.call(rbind, wellbeing))
 dMRI_model_list = c(replicate(8,"FULL"), replicate(8,"MEAN"), replicate(8,"BRIA"), replicate(8,"DKI"),
                     replicate(8,"DTI"), replicate(8,"SMT"), replicate(8,"SMT_mc"), replicate(8,"WMTI"))
 wellbeing_tab$Model = dMRI_model_list
-wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "V1",
-                                         "CI2.5" = "X2.5..",
-                                         "CI97.5" = "X97.5..",
-                                         "Variable" = "V4")
+wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(wellbeing_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 wellbeing_tab$Beta = as.numeric(as.character(wellbeing_tab$Beta))
-wellbeing_tab$CI2.5 = as.numeric(as.character(wellbeing_tab$CI2.5))
-wellbeing_tab$CI97.5 = as.numeric(as.character(wellbeing_tab$CI97.5))
+wellbeing_tab$SD = as.numeric(as.character(wellbeing_tab$SD))
 wellbeing_tab$Model = (as.factor(wellbeing_tab$Model))
 wellbeing_tab$Variable = (factor(wellbeing_tab$Variable, levels = c("Age","Job Satisfaction", "Finance Satisfaction", "Self-Rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Friend Relationship Satisfaction","Happiness")))
 wellbeing_tab = na.omit(wellbeing_tab)
 # Basic bar plot
 Fwellbeing_plot =ggplot(wellbeing_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.2)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(title = "Females: Brain Age ~ Life Satisfaction Factors", x="Predictors of BAG", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(title = "Females: Brain Age ~ Life Satisfaction Factors", x="Predictors of BAG", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
-  theme_bw() + theme(axis.text.x = element_text(angle = 45)) + ylim(-0.75, 0.5)
+  theme_bw() + theme(axis.text.x = element_text(angle = 45))
 #ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersFWellbeingPlot.pdf",Fwellbeing_plot, height = 6, width = 9)
 ##ggsave("/tsd/p33/home/p33-maxk/export/FrontiersFWellbeingPlot.pdf",Fwellbeing_plot, height = 6, width = 9)
 
 ################ COGNIION MODEL
 cognition = list()
 for (i in 1:8){
-  cognition[[i]] = cbind(summary(Fmodel5[[i]])$coefficients[2:9,1], confint(Fmodel5[[i]])[4:11,], c("Age","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered"), c(replicate(10, "cognition")))
-} # to get the intercept as well: # cognition[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "cognition")))
+  cognition[[i]] = cbind(stdCoef.merMod(Fmodel5[[i]])[2:9,1], stdCoef.merMod(Fmodel5[[i]])[2:9,2], c("Age","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered"), c(replicate(8, "cognition")))
+} # to get the intercept as well: # cognition[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "cognition")))
 cognition_tab = data.frame(do.call(rbind, cognition))
 dMRI_model_list = c(replicate(8,"FULL"), replicate(8,"MEAN"), replicate(8,"BRIA"), replicate(8,"DKI"),
                     replicate(8,"DTI"), replicate(8,"SMT"), replicate(8,"SMT_mc"), replicate(8,"WMTI"))
 cognition_tab$Model = dMRI_model_list
-cognition_tab = cognition_tab %>% dplyr::rename("Beta" = "V1",
-                                         "CI2.5" = "X2.5..",
-                                         "CI97.5" = "X97.5..",
-                                         "Variable" = "V4")
+cognition_tab = cognition_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(cognition_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 cognition_tab$Beta = as.numeric(as.character(cognition_tab$Beta))
-cognition_tab$CI2.5 = as.numeric(as.character(cognition_tab$CI2.5))
-cognition_tab$CI97.5 = as.numeric(as.character(cognition_tab$CI97.5))
+cognition_tab$SD = as.numeric(as.character(cognition_tab$SD))
 cognition_tab$Model = (as.factor(cognition_tab$Model))
 cognition_tab$Variable = (factor(cognition_tab$Variable, levels = c("Age","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered")))
 
 # Basic bar plot
 Fcognition_plot =ggplot(cognition_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.2)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(title = "Females: Brain Age ~ Cognitive Factors",x="Predictors of BAG", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(title = "Females: Brain Age ~ Cognitive Factors",x="Predictors of BAG", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
-  theme_bw() + theme(axis.text.x = element_text(angle = 45)) + ylim(-0.75, 0.6)
+  theme_bw() + theme(axis.text.x = element_text(angle = 45))
 ##ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersFCognitionPlot.pdf",Fcognition_plot, height = 6, width = 9)
 ##ggsave("/tsd/p33/home/p33-maxk/export/FrontiersFCognitionPlot.pdf",Fcognition_plot, height = 6, width = 9)
-
 
 
 
@@ -1239,31 +1228,30 @@ Fcognition_plot =ggplot(cognition_tab, aes(x = Variable, y = Beta, group = Model
 ####################### SOCIODEMO MODEL
 sociodemo = list()
 for (i in 1:8){
-  sociodemo[[i]] = cbind(summary(Mmodel2[[i]])$coefficients[2:6,1], confint(Mmodel2[[i]])[4:8,], c("Age","Ethniciy","Higher Education","Income","Social Visits"), c(replicate(5, "sociodemo")))
-} # to get the intercept as well: # sociodemo[[i]] = cbind(summary(Mmodel1[[i]])$coefficients[,1], confint(Mmodel1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "sociodemo")))
+  sociodemo[[i]] = cbind(stdCoef.merMod(Mmodel2[[i]])[2:6,1], stdCoef.merMod(Mmodel2[[i]])[2:6,2], c("Age","Ethniciy","Higher Education","Income","Social Visits"), c(replicate(5, "sociodemo")))
+} # to get the intercept as well: # sociodemo[[i]] = cbind(stdCoef.merMod(Mmodel1[[i]])[,1], confint(Mmodel1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "sociodemo")))
 
 sociodemo_tab = data.frame(do.call(rbind, sociodemo))
 dMRI_model_list = c(replicate(5,"FULL"), replicate(5,"MEAN"), replicate(5,"BRIA"), replicate(5,"DKI"),
                     replicate(5,"DTI"), replicate(5,"SMT"), replicate(5,"SMT_mc"), replicate(5,"WMTI"))
 sociodemo_tab$Model = dMRI_model_list
-sociodemo_tab = sociodemo_tab %>% dplyr::rename("Beta" = "V1",
-                                         "CI2.5" = "X2.5..",
-                                         "CI97.5" = "X97.5..",
-                                         "Variable" = "V4")
+sociodemo_tab = sociodemo_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(sociodemo_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 sociodemo_tab$Beta = as.numeric(as.character(sociodemo_tab$Beta))
-sociodemo_tab$CI2.5 = as.numeric(as.character(sociodemo_tab$CI2.5))
-sociodemo_tab$CI97.5 = as.numeric(as.character(sociodemo_tab$CI97.5))
+sociodemo_tab$SD = as.numeric(as.character(sociodemo_tab$SD))
 sociodemo_tab$Model = (as.factor(sociodemo_tab$Model))
 sociodemo_tab$Variable = factor(sociodemo_tab$Variable, levels =c("Age","Ethniciy","Income","Higher Education", "Social Visits"))
 
 # Basic plot
 Msociodemo_plot = ggplot(sociodemo_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.2)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(title = "Males: Brain Age ~ Sociodemographic Factors",x="Predictors of BAG", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(title = "Males: Brain Age ~ Sociodemographic Factors",x="Predictors of BAG", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
-  ylim(-1,1) + theme_bw()
+  theme_bw()
 #ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersMSociodemoPlot.pdf",Msociodemo_plot, height = 6, width = 9)
 ##ggsave("/tsd/p33/home/p33-maxk/export/FrontiersMSociodemoPlot.pdf",Msociodemo_plot, height = 6, width = 9)
 
@@ -1271,91 +1259,88 @@ Msociodemo_plot = ggplot(sociodemo_tab, aes(x = Variable, y = Beta, group = Mode
 pred_names = c("Age","BMI","WHR","PP","Alcohol","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Birth Weight","Sleep","Coffee", "Smoking")
 health = list()
 for (i in 1:8){
-  health[[i]] = cbind(summary(Mmodel3[[i]])$coefficients[2:14,1], confint(Mmodel3[[i]])[4:16,], pred_names, c(replicate(18, "health")))
-} # to get the intercept as well: # health[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "health")))
+  health[[i]] = cbind(stdCoef.merMod(Mmodel3[[i]])[2:14,1], stdCoef.merMod(Mmodel3[[i]])[2:14,2], pred_names, c(replicate(13, "health")))
+} # to get the intercept as well: # health[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "health")))
 
 health_tab = data.frame(do.call(rbind, health))
 dMRI_model_list = c(replicate(length(pred_names),"FULL"), replicate(length(pred_names),"MEAN"), replicate(length(pred_names),"BRIA"), replicate(length(pred_names),"DKI"),
                     replicate(length(pred_names),"DTI"), replicate(length(pred_names),"SMT"), replicate(length(pred_names),"SMT_mc"), replicate(length(pred_names),"WMTI"))
 health_tab$Model = dMRI_model_list
 health_tab = health_tab %>% dplyr::rename("Beta" = "V1",
-                                   "CI2.5" = "X2.5..",
-                                   "CI97.5" = "X97.5..",
-                                   "Variable" = "pred_names")
+                                          "SD" = "V2",
+                                          "Predictors" = "V4",
+                                          "Variable" = "pred_names")
 levels(health_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 health_tab$Beta = as.numeric(as.character(health_tab$Beta))
-health_tab$CI2.5 = as.numeric(as.character(health_tab$CI2.5))
-health_tab$CI97.5 = as.numeric(as.character(health_tab$CI97.5))
+health_tab$SD = as.numeric(as.character(health_tab$SD))
 health_tab$Model = (as.factor(health_tab$Model))
 health_tab$Variable = (factor(health_tab$Variable, levels= c("Age","BMI","WHR","Birth Weight","PP","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Sleep","Coffee","Alcohol", "Smoking")))
 
 # Basic bar plot
 Mhealth_plot = ggplot(health_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.2)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(title = "Males: Brain Age ~ Health Risk Factors",x="Predictors of BAG", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(title = "Males: Brain Age ~ Health and Lifestyle Factors",x="Predictors of BAG", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
-  theme_bw()+ theme(axis.text.x = element_text(angle = 45)) + ylim(-1,8)
+  theme_bw()+ theme(axis.text.x = element_text(angle = 45)) # + ylim(-1,8)
 #ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersMHealthPlot.pdf",Mhealth_plot, height = 6, width = 9)
 ##ggsave("/tsd/p33/home/p33-maxk/export/FrontiersMHealthPlot.pdf",Mhealth_plot, height = 6, width = 9)
 
 ################ WELLBEING MODEL
 wellbeing = list()
 for (i in 1:8){
-  wellbeing[[i]] = cbind(summary(Mmodel4[[i]])$coefficients[2:9,1], confint(Mmodel4[[i]])[4:11,], c("Age","Job Satisfaction", "Finance Satisfaction", "Self-rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Happiness", "Friend Relationship Satisfaction"), c(replicate(11, "wellbeing")))
-} # to get the intercept as well: # wellbeing[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "wellbeing")))
+  wellbeing[[i]] = cbind(stdCoef.merMod(Mmodel4[[i]])[2:9,1], stdCoef.merMod(Mmodel4[[i]])[2:9,2], c("Age","Job Satisfaction", "Finance Satisfaction", "Self-rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Happiness", "Friend Relationship Satisfaction"), c(replicate(8, "wellbeing")))
+} # to get the intercept as well: # wellbeing[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "wellbeing")))
 wellbeing_tab = data.frame(do.call(rbind, wellbeing))
 dMRI_model_list = c(replicate(8,"FULL"), replicate(8,"MEAN"), replicate(8,"BRIA"), replicate(8,"DKI"),
                     replicate(8,"DTI"), replicate(8,"SMT"), replicate(8,"SMT_mc"), replicate(8,"WMTI"))
 wellbeing_tab$Model = dMRI_model_list
-wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "V1",
-                                         "CI2.5" = "X2.5..",
-                                         "CI97.5" = "X97.5..",
-                                         "Variable" = "V4")
+wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(wellbeing_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 wellbeing_tab$Beta = as.numeric(as.character(wellbeing_tab$Beta))
-wellbeing_tab$CI2.5 = as.numeric(as.character(wellbeing_tab$CI2.5))
-wellbeing_tab$CI97.5 = as.numeric(as.character(wellbeing_tab$CI97.5))
+wellbeing_tab$SD = as.numeric(as.character(wellbeing_tab$SD))
 wellbeing_tab$Model = (as.factor(wellbeing_tab$Model))
 wellbeing_tab$Variable = (factor(wellbeing_tab$Variable, levels = c("Age","Job Satisfaction", "Finance Satisfaction", "Self-Rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Friend Relationship Satisfaction","Happiness")))
 wellbeing_tab = na.omit(wellbeing_tab)
 # Basic bar plot
 Mwellbeing_plot =ggplot(wellbeing_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.2)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(title = "Males: Brain Age ~ Life Satisfaction Factors",x="Predictors of BAG", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(title = "Males: Brain Age ~ Life Satisfaction Factors",x="Predictors of BAG", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
-  theme_bw() + theme(axis.text.x = element_text(angle = 45)) + ylim(-0.75, 0.5)
+  theme_bw() + theme(axis.text.x = element_text(angle = 45)) #+ ylim(-0.75, 0.5)
 #ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersMWellbeingPlot.pdf",MWellbeing_plot, height = 6, width = 9)
 ##ggsave("/tsd/p33/home/p33-maxk/export/FrontiersMWellbeingPlot.pdf",MWellbeing_plot, height = 6, width = 9)
 
 ################ COGNIION MODEL
 cognition = list()
 for (i in 1:8){
-  cognition[[i]] = cbind(summary(Mmodel5[[i]])$coefficients[2:9,1], confint(Mmodel5[[i]])[4:11,], c("Age","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered"), c(replicate(10, "cognition")))
-} # to get the intercept as well: # cognition[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "cognition")))
+  cognition[[i]] = cbind(stdCoef.merMod(Mmodel5[[i]])[2:9,1], stdCoef.merMod(Mmodel5[[i]])[2:9,2], c("Age","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered"), c(replicate(8, "cognition")))
+} # to get the intercept as well: # cognition[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Age"), c(replicate(4, "cognition")))
 cognition_tab = data.frame(do.call(rbind, cognition))
 dMRI_model_list = c(replicate(8,"FULL"), replicate(8,"MEAN"), replicate(8,"BRIA"), replicate(8,"DKI"),
                     replicate(8,"DTI"), replicate(8,"SMT"), replicate(8,"SMT_mc"), replicate(8,"WMTI"))
 cognition_tab$Model = dMRI_model_list
-cognition_tab = cognition_tab %>% dplyr::rename("Beta" = "V1",
-                                         "CI2.5" = "X2.5..",
-                                         "CI97.5" = "X97.5..",
-                                         "Variable" = "V4")
+cognition_tab = cognition_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(cognition_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 cognition_tab$Beta = as.numeric(as.character(cognition_tab$Beta))
-cognition_tab$CI2.5 = as.numeric(as.character(cognition_tab$CI2.5))
-cognition_tab$CI97.5 = as.numeric(as.character(cognition_tab$CI97.5))
+cognition_tab$SD = as.numeric(as.character(cognition_tab$SD))
 cognition_tab$Model = (as.factor(cognition_tab$Model))
 cognition_tab$Variable = (factor(cognition_tab$Variable, levels = c("Age","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Matrix Puzzles Solved","Digits Remembered")))
 
 # Basic bar plot
 Mcognition_plot =ggplot(cognition_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.2)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(title = "Males: Brain Age ~ Cognitive Factors",x="Predictors of BAG", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(title = "Males: Brain Age ~ Cognitive Factors",x="Predictors of BAG", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
-  theme_bw() + theme(axis.text.x = element_text(angle = 45)) + ylim(-0.75, 0.6)
+  theme_bw() + theme(axis.text.x = element_text(angle = 45)) #+ ylim(-0.75, 0.6)
 #ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersMcognitionPlot.pdf",Mcognition_plot, height = 6, width = 9)
 #ggsave("/tsd/p33/home/p33-maxk/export/FrontiersMcognitionPlot.pdf",Mcognition_plot, height = 6, width = 9)
 
@@ -1369,7 +1354,7 @@ Cbeta = ggarrange(Fcognition_plot, Mcognition_plot, ncol = 2, common.legend = T,
 # all in one
 plotall = ggarrange(Sbeta, Hbeta, Wbeta, Cbeta, ncol = 1, nrow = 4, common.legend = T,legend = "bottom")
 ggsave("/tsd/p33/home/p33-maxk/export/FrontiersSEXsociodemoPlot.pdf",plotall, height = 18, width = 12)
-ggsave("/cluster/projects/p33/users/maxk/UKB/export/FrontiersSF3.pdf",plotall, height = 18, width = 12)
+ggsave("/cluster/projects/p33/users/maxk/UKB/Frontiers_export/FrontiersSF3.pdf",plotall, height = 18, width = 12)
 
 #####
 #####
@@ -1528,7 +1513,7 @@ for (i in 1:8) {model5_metrics[i,] = c(r.squaredGLMM(model5[[i]]),AIC(model5[[i]
 # remove WHR to see which effect this has on BMI
 model3.1 <- list()
 for (i in 1:8) {model3.1[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3)+ BMI + pulse_pressure + alcohol_drinker + diabetic +
-                                     high_cholesterol + hypertension + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3 + smoking, data=brainage_list[[i]])}
+                                       high_cholesterol + hypertension + diagnosed_vascular_problem + birth_weight_t1 + sleep_hours_t3 + daily_coffee_t3 + smoking, data=brainage_list[[i]])}
 
 
 
@@ -1574,32 +1559,31 @@ model3.1_table = model3.1_table%>% select(-npar, -Df) %>% mutate(Model = mod_nam
 # PLOT
 health = list()
 for (i in 1:8){
-  health[[i]] = cbind(summary(model3.1[[i]])$coefficients[2:15,1], confint(model3.1[[i]])[4:17,], c("Age","Sex","BMI","PP","Alcohol","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Birth Weight","Sleep","Coffee","Smoking","Age*Sex"), c(replicate(18, "health")))
-} # to get the intercept as well: # health[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "health")))
+  health[[i]] = cbind(stdCoef.merMod(model3.1[[i]])[2:15,1], stdCoef.merMod(model3.1[[i]])[2:15,2], c("Age","Sex","BMI","PP","Alcohol","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Birth Weight","Sleep","Coffee","Smoking","Age*Sex"), c(replicate(14, "health")))
+} # to get the intercept as well: # health[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "health")))
 
 health_tab = data.frame(do.call(rbind, health))
 dMRI_model_list = c(replicate(14,"FULL"), replicate(14,"MEAN"), replicate(14,"BRIA"), replicate(14,"DKI"),
                     replicate(14,"DTI"), replicate(14,"SMT"), replicate(14,"SMT_mc"), replicate(14,"WMTI"))
 health_tab$Model = dMRI_model_list
-health_tab = health_tab %>% dplyr::rename("Beta" = "V1",
-                                          "CI2.5" = "X2.5..",
-                                          "CI97.5" = "X97.5..",
-                                          "Variable" = "V4")
+health_tab = health_tab %>% dplyr::rename("Beta" = "X1",
+                                          "SD" = "X2",
+                                          "Variable" = "X3",
+                                          "Predictors" = "X4")
 levels(health_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 health_tab$Beta = as.numeric(as.character(health_tab$Beta))
-health_tab$CI2.5 = as.numeric(as.character(health_tab$CI2.5))
-health_tab$CI97.5 = as.numeric(as.character(health_tab$CI97.5))
+health_tab$SD = as.numeric(as.character(health_tab$SD))
 health_tab$Model = (as.factor(health_tab$Model))
 health_tab$Variable = (factor(health_tab$Variable, levels= c("Age","Sex","Age*Sex","BMI","Birth Weight","PP","Diabetic","High Chol","Hypertension","Vascular Diagnosis","Sleep","Coffee","Alcohol", "Smoking")))
 
 # Basic bar plot
 no_WHR_plot = ggplot(health_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw()+ theme(axis.text.x = element_text(angle = 45))
-ggsave("/cluster/projects/p33/users/maxk/UKB/export2/SF5.pdf",no_WHR_plot, height = 6, width = 9)
+ggsave("/cluster/projects/p33/users/maxk/UKB/Frontiers_export/SF5.pdf",no_WHR_plot, height = 6, width = 9)
 
 
 
@@ -1640,33 +1624,31 @@ model3.2_table = model3.2_table%>% select(-npar, -Df) %>% mutate(Model = mod_nam
 # PLOT
 health = list()
 for (i in 1:8){
-  health[[i]] = cbind(summary(model3.2[[i]])$coefficients[2:15,1], confint(model3.2[[i]])[4:17,], c("Age","Sex","BMI","WHR","PP","Alcohol","Diabetic","High Chol","Vascular Diagnosis","Birth Weight","Sleep","Coffee","Smoking","Age*Sex"), c(replicate(18, "health")))
-} # to get the intercept as well: # health[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "health")))
+  health[[i]] = cbind(stdCoef.merMod(model3.2[[i]])[2:15,1], stdCoef.merMod(model3.2[[i]])[2:15,], c("Age","Sex","BMI","WHR","PP","Alcohol","Diabetic","High Chol","Vascular Diagnosis","Birth Weight","Sleep","Coffee","Smoking","Age*Sex"), c(replicate(14, "health")))
+} # to get the intercept as well: # health[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "health")))
 
 health_tab = data.frame(do.call(rbind, health))
 dMRI_model_list = c(replicate(14,"FULL"), replicate(14,"MEAN"), replicate(14,"BRIA"), replicate(14,"DKI"),
                     replicate(14,"DTI"), replicate(14,"SMT"), replicate(14,"SMT_mc"), replicate(14,"WMTI"))
 health_tab$Model = dMRI_model_list
-health_tab = health_tab %>% dplyr::rename("Beta" = "V1",
-                                          "CI2.5" = "X2.5..",
-                                          "CI97.5" = "X97.5..",
-                                          "Variable" = "V4")
+health_tab = health_tab %>% dplyr::rename("Beta" = "stdcoef",
+                                          "SD" = "stdse",
+                                          "Variable" = "c..Age....Sex....BMI....WHR....PP....Alcohol....Diabetic....High.Chol...",
+                                          "Predictors" = "c.replicate.14...health...")
 levels(health_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 health_tab$Beta = as.numeric(as.character(health_tab$Beta))
-health_tab$CI2.5 = as.numeric(as.character(health_tab$CI2.5))
-health_tab$CI97.5 = as.numeric(as.character(health_tab$CI97.5))
+health_tab$SD = as.numeric(as.character(health_tab$SD))
 health_tab$Model = (as.factor(health_tab$Model))
 health_tab$Variable = (factor(health_tab$Variable, levels= c("Age","Sex","Age*Sex","BMI","Birth Weight","WHR","PP","Diabetic","High Chol","Vascular Diagnosis","Sleep","Coffee","Alcohol", "Smoking")))
 
 # Basic bar plot
 no_hypertension_plot = ggplot(health_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw()+ theme(axis.text.x = element_text(angle = 45))
-ggsave("/cluster/projects/p33/users/maxk/UKB/export2/SF6.pdf",no_hypertension_plot, height = 6, width = 9)
-
+ggsave("/cluster/projects/p33/users/maxk/UKB/Frontiers_export/SF6.pdf",no_hypertension_plot, height = 6, width = 9)
 
 
 
@@ -1688,7 +1670,7 @@ for (i in 1:8) {model5_metrics[i,] = c(r.squaredGLMM(model5[[i]]),AIC(model5[[i]
 # reduced model
 model5.1 <- list()
 for (i in 1:8) {model5.1[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3) + tower_arranging + prospective_memory_t3 + fluid_intelligence_t3 + 
-                                     excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + digits_remembered_t3, data=brainage_list[[i]])}
+                                       excl_sample.digit_sub_correct_t3 + mean_inc_pair_matches + digits_remembered_t3, data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model5.1_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model5.1_metrics[i,] = c(r.squaredGLMM(model5.1[[i]]),AIC(model5.1[[i]]),(sigma(model5.1[[i]]))^2,summary(model5.1[[i]])$logLik[1])} 
@@ -1718,20 +1700,19 @@ model5.1_table = model5.1_table%>% select(-npar, -Df) %>% mutate(Model = mod_nam
 ################ REDUCED COGNIION MODEL PLOT
 cognition = list()
 for (i in 1:8){
-  cognition[[i]] = cbind(summary(model5.1[[i]])$coefficients[2:10,1], confint(model5.1[[i]])[4:12,], c("Age","Sex","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Digits Remembered","Age*Sex"), c(replicate(9, "cognition")))
-} # to get the intercept as well: # cognition[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "cognition")))
+  cognition[[i]] = cbind(stdCoef.merMod(model5.1[[i]])[2:10,1], stdCoef.merMod(model5.1[[i]])[2:10,2], c("Age","Sex","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Digits Remembered","Age*Sex"), c(replicate(9, "cognition")))
+} # to get the intercept as well: # cognition[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "cognition")))
 cognition_tab = data.frame(do.call(rbind, cognition))
 dMRI_model_list = c(replicate(9,"FULL"), replicate(9,"MEAN"), replicate(9,"BRIA"), replicate(9,"DKI"),
                     replicate(9,"DTI"), replicate(9,"SMT"), replicate(9,"SMT_mc"), replicate(9,"WMTI"))
 cognition_tab$Model = dMRI_model_list
-cognition_tab = cognition_tab %>% dplyr::rename("Beta" = "V1",
-                                                "CI2.5" = "X2.5..",
-                                                "CI97.5" = "X97.5..",
-                                                "Variable" = "V4")
+cognition_tab = cognition_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(cognition_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 cognition_tab$Beta = as.numeric(as.character(cognition_tab$Beta))
-cognition_tab$CI2.5 = as.numeric(as.character(cognition_tab$CI2.5))
-cognition_tab$CI97.5 = as.numeric(as.character(cognition_tab$CI97.5))
+cognition_tab$SD = as.numeric(as.character(cognition_tab$SD))
 cognition_tab$Model = (as.factor(cognition_tab$Model))
 cognition_tab$Variable = (factor(cognition_tab$Variable, levels = c("Age","Sex","Age*Sex","Tower Arranging", "Prospective Memory", "Fluid Intelligence","Symbol Digit Substitution","Mean Correct Pair Matches","Digits Remembered")))
 
@@ -1740,11 +1721,11 @@ cognition_tab$Variable = (factor(cognition_tab$Variable, levels = c("Age","Sex",
 # Basic bar plot
 cognition_plot2 =ggplot(cognition_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw() + theme(axis.text.x = element_text(angle = 45))
-ggsave("/cluster/projects/p33/users/maxk/UKB/export2/SF9.pdf",cognition_plot2, height = 6, width = 9)
+ggsave("/cluster/projects/p33/users/maxk/UKB/Frontiers_export/SF9.pdf",cognition_plot2, height = 6, width = 9)
 
 
 
@@ -1791,32 +1772,30 @@ model4.1_table = model4.1_table%>% select(-npar, -Df) %>% mutate(Model = mod_nam
 ################ PLOT
 wellbeing = list()
 for (i in 1:8){
-  wellbeing[[i]] = cbind(summary(model4.1[[i]])$coefficients[2:10,1], confint(model4.1[[i]])[4:12,], c("Age","Sex","Job Satisfaction", "Finance Satisfaction", "Health Satisfaction", "Family Relationships Satisfaction", "Happiness", "Friend Relationship Satisfaction","Age*Sex"), c(replicate(9, "wellbeing")))
-} # to get the intercept as well: # wellbeing[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "wellbeing")))
+  wellbeing[[i]] = cbind(stdCoef.merMod(model4.1[[i]])[2:10,1], stdCoef.merMod(model4.1[[i]])[2:10,2], c("Age","Sex","Job Satisfaction", "Finance Satisfaction", "Health Satisfaction", "Family Relationships Satisfaction", "Happiness", "Friend Relationship Satisfaction","Age*Sex"), c(replicate(9, "wellbeing")))
+} # to get the intercept as well: # wellbeing[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "wellbeing")))
 wellbeing_tab = data.frame(do.call(rbind, wellbeing))
 dMRI_model_list = c(replicate(9,"FULL"), replicate(9,"MEAN"), replicate(9,"BRIA"), replicate(9,"DKI"),
                     replicate(9,"DTI"), replicate(9,"SMT"), replicate(9,"SMT_mc"), replicate(9,"WMTI"))
 wellbeing_tab$Model = dMRI_model_list
-wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "V1",
-                                                "CI2.5" = "X2.5..",
-                                                "CI97.5" = "X97.5..",
-                                                "Variable" = "V4")
+wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "X1",
+                                                "SD" = "X2",
+                                                "Variable" = "X3",
+                                                "Predictors" = "X4")
 levels(wellbeing_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 wellbeing_tab$Beta = as.numeric(as.character(wellbeing_tab$Beta))
-wellbeing_tab$CI2.5 = as.numeric(as.character(wellbeing_tab$CI2.5))
-wellbeing_tab$CI97.5 = as.numeric(as.character(wellbeing_tab$CI97.5))
+wellbeing_tab$SD = as.numeric(as.character(wellbeing_tab$SD))
 wellbeing_tab$Model = (as.factor(wellbeing_tab$Model))
 wellbeing_tab$Variable = (factor(wellbeing_tab$Variable, levels = c("Age","Sex","Age*Sex","Job Satisfaction", "Finance Satisfaction", "Health Satisfaction", "Family Relationships Satisfaction", "Friend Relationship Satisfaction","Happiness")))
 #wellbeing_tab = na.omit(wellbeing_tab)
 #  plot
 no_health_sat = ggplot(wellbeing_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw()+ theme(axis.text.x = element_text(angle = 45))
-ggsave("/cluster/projects/p33/users/maxk/UKB/export2/SF7.pdf",no_health_sat, height = 6, width = 9)
-
+ggsave("/cluster/projects/p33/users/maxk/UKB/Frontiers_export/SF7.pdf",no_health_sat, height = 6, width = 9)
 
 
 
@@ -1832,7 +1811,7 @@ for (i in 1:8) {model4[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_
 # reduced model
 model4.2 <- list()
 for (i in 1:8) {model4.2[[i]] = lmer(brainage ~ 1 + age + sex + age:sex + (1|site_t3)+ job_satisfaction_t3 + excl_sample.finance_satisfaction_t3 + overall_health_t3 +
-                                     excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_list[[i]])}
+                                       excl_sample.health_satisfaction_t3 + excl_sample.family_rel_satisfaction_t3 + excl_sample.friend_rel_satisfaction_t3 , data=brainage_list[[i]])}
 # loop over output data to create a table with model metrics
 model4.2_metrics = data.frame(matrix(nrow = 8, ncol = 5))
 for (i in 1:8) {model4.2_metrics[i,] = c(r.squaredGLMM(model4.2[[i]]),AIC(model4.2[[i]]),(sigma(model4.2[[i]]))^2,summary(model4.2[[i]])$logLik[1])} 
@@ -1865,29 +1844,25 @@ model4.2_table = model4.2_table%>% select(-npar, -Df) %>% mutate(Model = mod_nam
 ################ PLOT
 wellbeing = list()
 for (i in 1:8){
-  wellbeing[[i]] = cbind(summary(model4.2[[i]])$coefficients[2:10,1], confint(model4.2[[i]])[4:12,], c("Age","Sex","Job Satisfaction", "Finance Satisfaction", "Self-Rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Friend Relationship Satisfaction","Age*Sex"), c(replicate(9, "wellbeing")))
-} # to get the intercept as well: # wellbeing[[i]] = cbind(summary(model1[[i]])$coefficients[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "wellbeing")))
+  wellbeing[[i]] = cbind(stdCoef.merMod(model4.2[[i]])[2:10,1], stdCoef.merMod(model4.2[[i]])[2:10,], c("Age","Sex","Job Satisfaction", "Finance Satisfaction", "Self-Rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Friend Relationship Satisfaction","Age*Sex"), c(replicate(9, "wellbeing")))
+} # to get the intercept as well: # wellbeing[[i]] = cbind(stdCoef.merMod(model1[[i]])[,1], confint(model1[[i]])[3:6,], c("Intercept","Sex","Age","Age*Sex"), c(replicate(4, "wellbeing")))
 wellbeing_tab = data.frame(do.call(rbind, wellbeing))
 dMRI_model_list = c(replicate(9,"FULL"), replicate(9,"MEAN"), replicate(9,"BRIA"), replicate(9,"DKI"),
                     replicate(9,"DTI"), replicate(9,"SMT"), replicate(9,"SMT_mc"), replicate(9,"WMTI"))
 wellbeing_tab$Model = dMRI_model_list
-wellbeing_tab = wellbeing_tab %>% dplyr::rename("Beta" = "V1",
-                                                "CI2.5" = "X2.5..",
-                                                "CI97.5" = "X97.5..",
-                                                "Variable" = "V4")
+names(wellbeing_tab) = c("0", "Beta", "SD", "Variable", "Predictors", "Model")
 levels(wellbeing_tab$Model)= c("FULL", "MEAN", "BRIA", "DKI", "DTI", "SMT", "SMT_mc", "WMTI")
 wellbeing_tab$Beta = as.numeric(as.character(wellbeing_tab$Beta))
-wellbeing_tab$CI2.5 = as.numeric(as.character(wellbeing_tab$CI2.5))
-wellbeing_tab$CI97.5 = as.numeric(as.character(wellbeing_tab$CI97.5))
+wellbeing_tab$SD = as.numeric(as.character(wellbeing_tab$SD))
 wellbeing_tab$Model = (as.factor(wellbeing_tab$Model))
 wellbeing_tab$Variable = (factor(wellbeing_tab$Variable, levels = c("Age","Sex","Age*Sex","Job Satisfaction", "Finance Satisfaction","Self-Rated Health", "Health Satisfaction", "Family Relationships Satisfaction", "Friend Relationship Satisfaction")))
 wellbeing_tab = na.omit(wellbeing_tab)
-wellbeing_tab
+
 # Basic plot
 no_happiness = ggplot(wellbeing_tab, aes(x = Variable, y = Beta, group = Model)) + 
   geom_point(position = position_dodge(width = 0.4), aes(color= Model), size = 0.8)+
-  geom_errorbar(aes(ymin=CI2.5, ymax=CI97.5, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
-  labs(x="Predictors of Brain Age", y = "Beta with 95% CI")+
+  geom_errorbar(aes(ymin=Beta-SD, ymax=Beta+SD, y=Beta, x = (Variable), color = Model), position = position_dodge(width = 0.4), width = 0.1)+
+  labs(x="Predictors of Brain Age", y = "Standardized Beta ± SD")+
   #guides(color = guide_legend(reverse = FALSE))+
   theme_bw()+ theme(axis.text.x = element_text(angle = 45))
 ggsave("/cluster/projects/p33/users/maxk/UKB/export2/SF8.pdf",no_happiness, height = 6, width = 9)
@@ -1900,11 +1875,11 @@ ggsave("/cluster/projects/p33/users/maxk/UKB/export2/SF8.pdf",no_happiness, heig
 ######### MAKE A LARGE MODEL COMPARISON TABLE *AND* A TABLE SHOWING DIFFERENCES IN MODEL METRICS ########
 # model comparison table
 ST8 = rbind(model3.1_table,model3.2_table,
-      model4.1_table, model4.2_table,
-      model5.1_table)
+            model4.1_table, model4.2_table,
+            model5.1_table)
 ST8$Reduction = c(replicate(8, c("Full Model", "WHR Reduced")), replicate(8, c("Full Model","Hypertension Reduced")),replicate(8, c("Full Model","Self-Rated Health Reduced")),replicate(8,c("Full Model", "Happiness Reduced")), replicate(8, c("Full Model", "Matrix Puzzles Reduced")))
 ST8 = ST8 %>% dplyr::rename("Diffusion_Model" = "Model",
-                      "Statistical_Model" = "Reduction")
+                            "Statistical_Model" = "Reduction")
 write_csv(ST8, "/cluster/projects/p33/users/maxk/UKB/export2/ST8.csv")
 
 # differences in metrics
@@ -2069,7 +2044,7 @@ mod_nam = c(replicate(2,"FULL"),replicate(2,"MEAN"), replicate(2,"BRIA"),replica
 # 6.1.1) biomodel
 biotable = biomodel_comp %>% bind_rows() %>% group_split()
 biotable = do.call(rbind.data.frame,biotable)
-biotable = biotable%>% select(-npar, -Df) %>% mutate(Regression_Model = replicate(16,"Health Risk Factors"),Diffusion_Model = mod_nam)
+biotable = biotable%>% select(-npar, -Df) %>% mutate(Regression_Model = replicate(16,"Health and Lifestyle Factors"),Diffusion_Model = mod_nam)
 # 6.1.1) cogmodel
 cogtable = cogmodel_comp %>% bind_rows() %>% group_split()
 cogtable = do.call(rbind.data.frame,cogtable)
@@ -2243,10 +2218,10 @@ diff_sat = rbind(model_sat_metrics) - rbind(model1_metrics)
 mean(diff_sat$X1)
 
 diff_sat = diff_sat %>% dplyr::rename("R2M"="X1",
-                                  "R2C" = "X2",
-                                  "AIC" = "X3",
-                                  "sig2" = "X4",
-                                  "logLik" = "X5")
+                                      "R2C" = "X2",
+                                      "AIC" = "X3",
+                                      "sig2" = "X4",
+                                      "logLik" = "X5")
 write.csv(diff_sat, "/cluster/projects/p33/users/maxk/UKB/export2/ST11.csv")
 
 # which is statistically significant
@@ -2263,6 +2238,6 @@ mod_nam = c(replicate(2,"FULL"),replicate(2,"MEAN"), replicate(2,"BRIA"),replica
 # make table
 sattable = model_sat_anova %>% bind_rows() %>% group_split()
 sattable = do.call(rbind.data.frame,sattable)
-sattable = sattable%>% select(-npar, -Df) %>% mutate(Regression_Model = replicate(16,"Health Risk Factors"),Diffusion_Model = mod_nam)
+sattable = sattable%>% select(-npar, -Df) %>% mutate(Regression_Model = replicate(16,"Health and Lifestyle Factors"),Diffusion_Model = mod_nam)
 
 write.csv(sattable, "/cluster/projects/p33/users/maxk/UKB/export2/ST12.csv")
